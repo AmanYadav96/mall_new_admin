@@ -35,12 +35,12 @@ const DeleteConfirmation = ({ show, onClose, onConfirm, itemName, itemImage, ite
           </div>
         )}
         <p>
-          {t('deleteConfirmationMessage', { 
+          {t('Are you sure you want to delete', { 
             itemType: t(itemType), 
             itemName: itemName || t(itemType) 
           })}
         </p>
-        <p className="text-danger fw-bold">{t('thisActionCannotBeUndone')}</p>
+        <p className="text-danger fw-bold">{t(`${itemName}`)}</p>
       </Modal.Body>
       <Modal.Footer className="justify-content-center">
         <Button variant="secondary" onClick={onClose}>

@@ -9,14 +9,15 @@ import DeleteConfirmation from '../components/DeleteConfirmation';
 const CouponsPage = () => {
   const { t } = useTranslation();
   const [coupons, setCoupons] = useState([]);
+  const [filteredCoupons, setFilteredCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [filteredCoupons, setFilteredCoupons] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [couponToDelete, setCouponToDelete] = useState(null);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchCoupons();
@@ -34,7 +35,7 @@ const CouponsPage = () => {
         throw new Error('Authentication token not found');
       }
       
-      // Make API request to fetch coupons
+      // Make API request
       const response = await axios.get('https://mall-backend-node.vercel.app/api/coupons/allCoupons', {
         params: {
           page: currentPage,
@@ -46,12 +47,12 @@ const CouponsPage = () => {
       });
       
       if (response.data && response.data.success) {
-        setCoupons(response.data.coupons);
-        setFilteredCoupons(response.data.coupons);
-        setTotalItems(response.data.totalCoupons);
-        setTotalPages(response.data.totalPages);
+        setCoupons(response.data.coupons || []);
+        setFilteredCoupons(response.data.coupons || []);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalItems(response.data.totalCoupons || 0);
       } else {
-        console.error('Unexpected API response format:', response.data);
+        throw new Error('Failed to fetch coupons');
       }
     } catch (error) {
       console.error('Error fetching coupons:', error);
@@ -61,15 +62,17 @@ const CouponsPage = () => {
     }
   };
 
-  const handleSearch = (searchTerm) => {
-    if (!searchTerm.trim()) {
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    
+    if (!term.trim()) {
       setFilteredCoupons(coupons);
       return;
     }
-
+    
     const filtered = coupons.filter(coupon => 
-      coupon.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (coupon.shop?.shopName && coupon.shop.shopName.toLowerCase().includes(searchTerm.toLowerCase()))
+      coupon.code.toLowerCase().includes(term.toLowerCase()) ||
+      coupon.description.toLowerCase().includes(term.toLowerCase())
     );
     
     setFilteredCoupons(filtered);
@@ -103,8 +106,11 @@ const CouponsPage = () => {
         }
       });
       
-      // Refresh the coupons list
-      fetchCoupons();
+      // Remove the deleted coupon from the state
+      const updatedCoupons = coupons.filter(coupon => coupon._id !== couponToDelete._id);
+      setCoupons(updatedCoupons);
+      setFilteredCoupons(updatedCoupons);
+      
       setShowDeleteModal(false);
       setCouponToDelete(null);
       
@@ -114,12 +120,6 @@ const CouponsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Format date to local format
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
   };
 
   if (loading && coupons.length === 0) {
@@ -144,72 +144,84 @@ const CouponsPage = () => {
 
       <div className="card mb-4">
         <div className="card-body">
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <SearchBar 
-                onSearch={handleSearch} 
-                placeholder={`${t('search')} ${t('coupons')}...`} 
-              />
-            </div>
+          <div className="mb-4">
+            <SearchBar 
+              onSearch={handleSearch} 
+              placeholder={`${t('search')} ${t('coupons')}...`} 
+            />
           </div>
           
-          <div className="table-responsive">
-            {filteredCoupons.length === 0 ? (
-              <div className="empty-state">
-                <i className="bi bi-ticket-perforated"></i>
-                <h5>{t('noDataFound')}</h5>
-                <p className="text-muted">No coupons match your search criteria.</p>
-              </div>
-            ) : (
-              <table className="table table-hover text-center">
+          {filteredCoupons.length === 0 ? (
+            <div className="empty-state">
+              <i className="bi bi-ticket-perforated"></i>
+              <h5>{t('noDataFound')}</h5>
+              <p className="text-muted">No coupons match your search criteria.</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th className="text-center">{t('image')}</th>
-                    <th className="text-center">{t('code')}</th>
-                    <th className="text-center">{t('shopName')}</th>
-                    <th className="text-center">{t('mall')}</th>
-                    <th className="text-center">{t('discountAmount')}</th>
-                    <th className="text-center">{t('startDate')}</th>
-                    <th className="text-center">{t('endDate')}</th>
-                    <th className="text-center">{t('usageLimit')}</th>
-                    <th className="text-center">{t('actions')}</th>
+                    <th>{t('code')}</th>
+                    <th>{t('discount')}</th>
+                    <th>{t('validFrom')}</th>
+                    <th>{t('validTo')}</th>
+                    <th>{t('status')}</th>
+                    <th>{t('actions')}</th>
                   </tr>
                 </thead>
+                // In the table row where you're displaying coupon data
                 <tbody>
                   {filteredCoupons.map(coupon => (
                     <tr key={coupon._id}>
-                      <td className="text-center align-middle">
-                        <img 
-                          src={coupon.image || 'https://via.placeholder.com/50?text=No+Image'} 
-                          alt={coupon.code} 
-                          className="img-thumbnail" 
-                          width="50" 
-                        />
+                      <td>
+                        <span className="badge bg-light text-dark p-2">{coupon.code}</span>
                       </td>
-                      <td className="text-center align-middle"><span className="badge bg-light text-dark">{coupon.code}</span></td>
-                      <td className="text-center align-middle">{coupon.shop?.shopName || 'Unknown Shop'}</td>
-                      <td className="text-center align-middle">{coupon.shop?.mall?.name || 'Unknown Mall'}</td>
-                      <td className="text-center align-middle">{coupon.discountAmount}%</td>
-                      <td className="text-center align-middle">{formatDate(coupon.startDate)}</td>
-                      <td className="text-center align-middle">{formatDate(coupon.endDate)}</td>
-                      <td className="text-center align-middle">{coupon.usageLimit}</td>
-                      <td className="text-center align-middle">
-                        <Link to={`/coupons/edit/${coupon._id}`} className="btn btn-action btn-outline-primary me-2">
-                          <i className="bi bi-pencil"></i>
-                        </Link>
-                        <button 
-                          className="btn btn-action btn-outline-danger" 
-                          onClick={() => confirmDelete(coupon)}
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
+                      <td>
+                        {/* Fix discount display */}
+                        {coupon.discountType === 'percentage' || coupon.discountType === undefined
+                          ? `${coupon.discountAmount || coupon.discountValue}%` 
+                          : `$${coupon.discountAmount || coupon.discountValue}`}
+                      </td>
+                      <td>
+                        {/* Fix date display */}
+                        {coupon.startDate || coupon.validFrom 
+                          ? new Date(coupon.startDate || coupon.validFrom).toLocaleDateString() 
+                          : 'N/A'}
+                      </td>
+                      <td>
+                        {/* Fix date display */}
+                        {coupon.endDate || coupon.validTo 
+                          ? new Date(coupon.endDate || coupon.validTo).toLocaleDateString() 
+                          : 'N/A'}
+                      </td>
+                      <td>
+                        {/* Fix status display */}
+                        {(coupon.endDate || coupon.validTo) && new Date(coupon.endDate || coupon.validTo) >= new Date() ? (
+                          <span className="badge bg-success">Active</span>
+                        ) : (
+                          <span className="badge bg-danger">Expired</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="d-flex gap-2">
+                          <Link to={`/coupons/edit/${coupon._id}`} className="btn btn-sm btn-outline-primary">
+                            <i className="bi bi-pencil"></i>
+                          </Link>
+                          <button 
+                            className="btn btn-sm btn-outline-danger" 
+                            onClick={() => confirmDelete(coupon)}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          )}
           
           {totalItems > itemsPerPage && (
             <Pagination 
@@ -223,11 +235,13 @@ const CouponsPage = () => {
         </div>
       </div>
 
+      {/* Delete confirmation modal */}
       <DeleteConfirmation
         show={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         itemName={couponToDelete?.code}
+        itemType="coupon"
       />
     </div>
   );

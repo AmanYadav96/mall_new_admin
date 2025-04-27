@@ -149,8 +149,11 @@ const ShopsPage = () => {
         }
       });
       
-      // Refresh the current page after deletion
-      fetchShops(currentPage);
+      // Remove the deleted shop from the state
+      const updatedShops = shops.filter(shop => shop._id !== shopToDelete._id);
+      setShops(updatedShops);
+      setFilteredShops(updatedShops);
+      
       setShowDeleteModal(false);
       setShopToDelete(null);
       
@@ -255,6 +258,7 @@ const ShopsPage = () => {
                           <i className="bi bi-pencil me-1"></i>
                           {t('edit')}
                         </Link>
+                        // In your JSX where you have the delete button
                         <button 
                           className="btn btn-sm btn-outline-danger" 
                           onClick={() => confirmDelete(shop)}
@@ -282,11 +286,14 @@ const ShopsPage = () => {
         </div>
       </div>
 
+      // At the end of your return statement
       <DeleteConfirmation
         show={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         itemName={shopToDelete?.shopName}
+        itemImage={shopToDelete?.image}
+        itemType="shop"
       />
     </div>
   );

@@ -76,14 +76,18 @@ const AddEditCoupon = () => {
             throw new Error('Authentication token not found');
           }
           
-          const response = await axios.get(`https://mall-backend-node.vercel.app/api/coupons/couponById/${id}`, {
+          const response = await axios.get(`https://mall-backend-node.vercel.app/api/coupons/getCoupon/${id}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
           
-          if (response.data) {
-            setCoupon(response.data);
+          console.log('Coupon API response:', response.data);
+          
+          if (response.data && (response.data.data || response.data)) {
+            // The coupon data is nested inside the 'data' property
+            const couponData = response.data.data || response.data;
+            setCoupon(couponData);
           }
         } catch (error) {
           console.error('Error fetching coupon details:', error);
