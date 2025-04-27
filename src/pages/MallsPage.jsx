@@ -250,7 +250,7 @@ const MallsPage = () => {
       </div>
 
       
-      // Update the DeleteConfirmation component at the end of your return statement
+    
       <DeleteConfirmation
         show={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
