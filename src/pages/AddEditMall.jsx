@@ -125,39 +125,39 @@ const AddEditMall = () => {
         throw new Error('Authentication token not found');
       }
       
-      // Create FormData object
+      // Create FormData for file upload
       const formData = new FormData();
-      formData.append('name', values.name);
-      formData.append('location', values.location);
-      formData.append('rating', values.rating);
-      formData.append('openingHours', values.openingHours);
       
-      // Convert comma-separated facilities string to array and append each facility
-      const facilitiesArray = values.facilities.split(',').map(facility => facility.trim());
-      facilitiesArray.forEach((facility, index) => {
-        formData.append(`facilities[${index}]`, facility);
+      // Add all form fields to FormData
+      Object.keys(values).forEach(key => {
+        if (key === 'facilities' && Array.isArray(values[key])) {
+          // Handle facilities array
+          values[key].forEach(facility => {
+            formData.append('facilities', facility);
+          });
+        } else {
+          formData.append(key, values[key]);
+        }
       });
-      
-      // Add coordinates
-      formData.append('coordinates[lat]', mapPosition[0]);
-      formData.append('coordinates[lng]', mapPosition[1]);
-      
-      // Generate Google Maps URL from coordinates
-      const googleMapsUrl = `https://www.google.com/maps?q=${mapPosition[0]},${mapPosition[1]}`;
-      formData.append('googleMapsUrl', googleMapsUrl);
       
       // Add image if available
       if (uploadedImage) {
         formData.append('image', uploadedImage);
       }
       
+      // Log the form data for debugging
+      console.log('Form values:', values);
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+      
       let response;
       
-      // Determine if we're creating or updating a mall
-      if (isEditMode) {
+      if (isEditMode && id) {
+        console.log('Updating mall with ID:', id);
         // Update existing mall
         response = await axios.put(
-          `https://mall-backend-node.vercel.app/api/malls/updateMall/${mall._id}`,
+          `https://mall-backend-node.vercel.app/api/malls/updateMall/${id}`,
           formData,
           {
             headers: {
@@ -169,7 +169,7 @@ const AddEditMall = () => {
       } else {
         // Create new mall
         response = await axios.post(
-          'https://mall-backend-node.vercel.app/api/malls/create',
+          'https://mall-backend-node.vercel.app/api/malls/createMall',
           formData,
           {
             headers: {
@@ -180,15 +180,12 @@ const AddEditMall = () => {
         );
       }
       
-      if (response.data && response.data.success) {
-        // Navigate back to malls list on success
-        navigate('/malls');
-      } else {
-        throw new Error(response.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} mall`);
-      }
+      console.log('Mall data submitted:', response.data);
+      navigate('/malls');
+      
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} mall:`, error);
-      alert(`Failed to ${isEditMode ? 'update' : 'create'} mall: ` + (error.response?.data?.message || error.message));
+      console.error('Error submitting mall data:', error);
+      alert('Failed to save mall: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
       setSubmitting(false);
