@@ -76,13 +76,17 @@ const MallsPage = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Add these functions to your component
   const confirmDelete = (mall) => {
     setMallToDelete(mall);
     setShowDeleteModal(true);
   };
-
+  
+  // Fix the fetchMalls function reference in handleDelete
   const handleDelete = async () => {
     try {
+      setLoading(true);
+      
       // Get the auth token from localStorage
       const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
       const token = adminUser.token;
@@ -91,22 +95,26 @@ const MallsPage = () => {
         throw new Error('Authentication token not found');
       }
       
-      // Make the API request to delete the mall
-      await axios.delete(`https://mall-backend-node.vercel.app/api/malls/mall/${mallToDelete._id}`, {
+      // Make API request to delete the mall
+      await axios.delete(`https://mall-backend-node.vercel.app/api/malls/deleteMall/${mallToDelete._id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      // Update local state after successful deletion
+      // Remove the deleted mall from the state
       const updatedMalls = malls.filter(mall => mall._id !== mallToDelete._id);
       setMalls(updatedMalls);
       setFilteredMalls(updatedMalls);
+      
       setShowDeleteModal(false);
       setMallToDelete(null);
-    } catch (err) {
-      console.error('Error deleting mall:', err);
-      alert('Failed to delete mall: ' + (err.response?.data?.message || err.message));
+      
+    } catch (error) {
+      console.error('Error deleting mall:', error);
+      alert('Failed to delete mall: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -213,6 +221,7 @@ const MallsPage = () => {
                           <i className="bi bi-pencil me-1"></i>
                           {t('edit')}
                         </Link>
+                        
                         <button 
                           className="btn btn-sm btn-outline-danger" 
                           onClick={() => confirmDelete(mall)}
@@ -240,11 +249,15 @@ const MallsPage = () => {
         </div>
       </div>
 
+      
+      // Update the DeleteConfirmation component at the end of your return statement
       <DeleteConfirmation
         show={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         itemName={mallToDelete?.name}
+        itemImage={mallToDelete?.image}
+        itemType="mall"
       />
     </div>
   );

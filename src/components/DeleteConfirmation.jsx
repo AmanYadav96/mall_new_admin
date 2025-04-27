@@ -1,35 +1,56 @@
+import React from 'react';
+import { Modal, Button } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 
-const DeleteConfirmation = ({ show, onClose, onConfirm, itemName }) => {
+const DeleteConfirmation = ({ show, onClose, onConfirm, itemName, itemImage, itemType = 'item' }) => {
   const { t } = useTranslation();
   
-  if (!show) return null;
-  
   return (
-    <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-      <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{t('confirmDelete')}</h5>
-            <button type="button" className="btn-close" onClick={onClose}></button>
+    <Modal 
+      show={show} 
+      onHide={onClose}
+      centered
+      backdrop="static"
+      className="delete-confirmation-modal"
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>{t('confirmDelete')}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="text-center">
+        {itemImage && (
+          <div className="mb-3">
+            <img 
+              src={itemImage} 
+              alt={itemName} 
+              className="img-thumbnail" 
+              style={{ 
+                maxHeight: '150px', 
+                maxWidth: '100%',
+                objectFit: 'cover'
+              }}
+              onError={(e) => {
+                e.target.src = 'https://images.pexels.com/photos/1579739/pexels-photo-1579739.jpeg';
+              }}
+            />
           </div>
-          <div className="modal-body">
-            <p>
-              {t('confirmDelete')} {itemName ? `"${itemName}"` : ''}?
-            </p>
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
-              {t('cancel')}
-            </button>
-            <button type="button" className="btn btn-danger" onClick={onConfirm}>
-              {t('delete')}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="modal-backdrop fade show"></div>
-    </div>
+        )}
+        <p>
+          {t('deleteConfirmationMessage', { 
+            itemType: t(itemType), 
+            itemName: itemName || t(itemType) 
+          })}
+        </p>
+        <p className="text-danger fw-bold">{t('thisActionCannotBeUndone')}</p>
+      </Modal.Body>
+      <Modal.Footer className="justify-content-center">
+        <Button variant="secondary" onClick={onClose}>
+          {t('cancel')}
+        </Button>
+        <Button variant="danger" onClick={onConfirm}>
+          {t('delete')}
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 
