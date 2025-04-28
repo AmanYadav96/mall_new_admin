@@ -142,9 +142,15 @@ const AddEditMall = () => {
         }
       });
       
-      // Add coordinates from map selection
-      formData.append('latitude', mapPosition[0]);
-      formData.append('longitude', mapPosition[1]);
+      // Add coordinates from map selection - ensure they're strings
+      formData.append('latitude', String(mapPosition[0]));
+      formData.append('longitude', String(mapPosition[1]));
+      
+      // Also add as coordinates object for backend compatibility
+      formData.append('coordinates', JSON.stringify({
+        lat: mapPosition[0],
+        lng: mapPosition[1]
+      }));
       
       // Add image if available
       if (uploadedImage) {
