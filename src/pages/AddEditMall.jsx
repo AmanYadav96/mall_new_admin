@@ -28,7 +28,11 @@ const AddEditMall = () => {
   const [mall, setMall] = useState(null);
   const [mapPosition, setMapPosition] = useState([51.505, -0.09]); // Default position
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [geocodedAddress, setGeocodedAddress] = useState('');
   const isEditMode = !!id;
+
+  // Google Maps API Key
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyA0pQ0z_ukpaRyeB0b61mDkTQGknjPWDo0';
 
   // Validation schema
   const validationSchema = Yup.object({
@@ -39,29 +43,40 @@ const AddEditMall = () => {
     facilities: Yup.string().required(t('required'))
   });
 
-  useEffect(() => {
-    if (isEditMode) {
-      setLoading(true);
-      // Simulate API call to get mall details
-      setTimeout(() => {
-        // Mock data - in a real app, fetch from API
-        const mockMall = {
-          id: parseInt(id),
-          name: 'Central Mall',
-          image: 'https://images.pexels.com/photos/1579739/pexels-photo-1579739.jpeg',
-          location: 'New York, USA',
-          coordinates: { lat: 40.7128, lng: -74.0060 },
-          rating: 4.5,
-          openingHours: '09:00 - 22:00',
-          facilities: 'Parking, Food Court, WiFi, Cinema'
-        };
-        
-        setMall(mockMall);
-        setMapPosition([mockMall.coordinates.lat, mockMall.coordinates.lng]);
-        setLoading(false);
-      }, 1000);
+  // Fetch address from coordinates
+  const fetchAddressFromCoordinates = async (lat, lng) => {
+    try {
+      const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
+      const response = await axios.get(reverseGeocodeUrl);
+      
+      if (response.data.results && response.data.results.length > 0) {
+        const address = response.data.results[0].formatted_address;
+        setGeocodedAddress(address);
+        return address;
+      } else {
+        console.error('No address found for these coordinates');
+        setGeocodedAddress('No address found');
+        return '';
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      setGeocodedAddress('Error fetching address');
+      return '';
     }
-  }, [id, isEditMode]);
+  };
+
+  // Update address when map position changes
+  useEffect(() => {
+    if (mapPosition && mapPosition.length === 2) {
+      fetchAddressFromCoordinates(mapPosition[0], mapPosition[1]);
+    }
+  }, [mapPosition]);
+
+  // Custom map position setter that also updates the address
+  const handleMapPositionChange = (newPosition) => {
+    setMapPosition(newPosition);
+    fetchAddressFromCoordinates(newPosition[0], newPosition[1]);
+  };
 
   useEffect(() => {
     if (isEditMode) {
@@ -320,6 +335,20 @@ const AddEditMall = () => {
                       <ErrorMessage name="facilities" component="div" className="invalid-feedback" />
                       <small className="form-text text-muted">Separate facilities with commas</small>
                     </div>
+                    
+                    {/* Add geocoded address field */}
+                    <div className="form-group mb-3">
+                      <label htmlFor="geocodedAddress" className="form-label">Location of Selected Coordinates</label>
+                      <input
+                        type="text"
+                        id="geocodedAddress"
+                        className="form-control"
+                        value={geocodedAddress}
+                        readOnly
+                        placeholder="Address will appear here after selecting location on map"
+                      />
+                      <small className="form-text text-muted">This address is automatically generated from the map coordinates</small>
+                    </div>
                   </div>
 
                   <div className="col-md-6">
@@ -340,7 +369,7 @@ const AddEditMall = () => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                           />
-                          <LocationPicker position={mapPosition} setPosition={setMapPosition} />
+                          <LocationPicker position={mapPosition} setPosition={handleMapPositionChange} />
                         </MapContainer>
                       </div>
                       <div className="row mt-2">
