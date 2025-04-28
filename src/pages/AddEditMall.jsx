@@ -323,6 +323,7 @@ const AddEditMall = () => {
                   </div>
 
                   <div className="col-md-6">
+                    // In the ImageUpload component usage section:
                     <div className="form-group mb-3">
                       <label className="form-label">{t('image')}</label>
                       <ImageUpload 

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const ImageUpload = ({ initialImage, onImageChange }) => {
   const [previewUrl, setPreviewUrl] = useState(initialImage || '');
@@ -23,6 +23,13 @@ const ImageUpload = ({ initialImage, onImageChange }) => {
     fileInputRef.current.click();
   };
 
+  useEffect(() => {
+    if (initialImage) {
+      console.log('Setting preview from initialImage:', initialImage);
+      setPreviewUrl(initialImage);
+    }
+  }, [initialImage]);
+
   return (
     <div className="image-upload">
       <div 
@@ -45,6 +52,10 @@ const ImageUpload = ({ initialImage, onImageChange }) => {
               maxHeight: '200px',
               objectFit: 'contain'
             }} 
+            onError={(e) => {
+              console.log('Image failed to load:', previewUrl);
+              e.target.src = 'https://via.placeholder.com/200?text=Image+Not+Found';
+            }}
           />
         ) : (
           <div className="upload-placeholder">
