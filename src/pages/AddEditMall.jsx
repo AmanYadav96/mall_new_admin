@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -22,6 +22,8 @@ const AddEditMall = () => {
   const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { latitude: initialLatitude, longitude: initialLongitude } = location.state || {};
   const [loading, setLoading] = useState(false);
   const [mall, setMall] = useState(null);
   const [mapPosition, setMapPosition] = useState([51.505, -0.09]); // Default position
@@ -140,6 +142,10 @@ const AddEditMall = () => {
         }
       });
       
+      // Add coordinates from map selection
+      formData.append('latitude', mapPosition[0]);
+      formData.append('longitude', mapPosition[1]);
+      
       // Add image if available
       if (uploadedImage) {
         formData.append('image', uploadedImage);
@@ -147,6 +153,7 @@ const AddEditMall = () => {
       
       // Log the form data for debugging
       console.log('Form values:', values);
+      console.log('Map coordinates:', mapPosition);
       for (let pair of formData.entries()) {
         console.log(pair[0] + ': ' + pair[1]);
       }
@@ -169,7 +176,7 @@ const AddEditMall = () => {
       } else {
         // Create new mall
         response = await axios.post(
-          'https://mall-backend-node.vercel.app/api/malls/createMall',
+          'https://mall-backend-node.vercel.app/api/malls/create',
           formData,
           {
             headers: {
