@@ -22,7 +22,7 @@ const UserTable = ({ users }) => {
             <th>{t('role')}</th>
             <th>{t('mobileNumber')}</th>
             <th>{t('joinedDate')}</th>
-            <th>{t('actions')}</th>
+            {/* <th>{t('actions')}</th> */}
           </tr>
         </thead>
         <tbody>
@@ -65,7 +65,7 @@ const UserTable = ({ users }) => {
               <td>
                 {new Date(user.createdAt).toLocaleDateString()}
               </td>
-              <td>
+              {/* <td>
                 <div className="btn-group">
                   <button className="btn btn-sm btn-outline-primary">
                     <i className="bi bi-pencil"></i>
@@ -74,7 +74,7 @@ const UserTable = ({ users }) => {
                     <i className="bi bi-trash"></i>
                   </button>
                 </div>
-              </td>
+              </td> */}
             </tr>
           ))}
         </tbody>
