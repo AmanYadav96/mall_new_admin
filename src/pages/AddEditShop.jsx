@@ -7,7 +7,7 @@ import ImageUpload from '../components/ImageUpload';
 import axios from 'axios'; // Add axios import
 
 const AddEditShop = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); // Add i18n to get current language
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -61,12 +61,25 @@ const AddEditShop = () => {
 
     fetchMalls();
     
-    // Set predefined categories
-    const predefinedCategories = [
-      "Clothing", "Electronics", "Sports", "Books", "Toys", 
-      "Jewelry", "Food", "Beauty", "Home", "Other"
-    ];
-    setCategories(predefinedCategories);
+    // Set categories based on current language
+    const getCategories = () => {
+      // English categories
+      const englishCategories = [
+        "Clothing", "Electronics", "Sports", "Books", "Toys", 
+        "Jewelry", "Food", "Beauty", "Home", "Other"
+      ];
+      
+      // Hebrew categories
+      const hebrewCategories = [
+        "ביגוד", "אלקטרוניקה", "ספורט", "ספרים", "צעצועים",
+        "תכשיטים", "מזון", "יופי", "בית", "אחר"
+      ];
+      
+      // Set categories based on current language
+      return i18n.language === 'he' ? hebrewCategories : englishCategories;
+    };
+    
+    setCategories(getCategories());
 
     if (isEditMode) {
       setLoading(true);
@@ -99,7 +112,7 @@ const AddEditShop = () => {
       
       fetchShopDetails();
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, i18n.language]); // Add i18n.language as dependency
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
