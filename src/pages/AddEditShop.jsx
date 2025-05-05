@@ -300,13 +300,13 @@ const AddEditShop = () => {
                         {categories.map((category, index) => (
                           <option key={index} value={category}>{category}</option>
                         ))}
-                        <option value="custom">{t('other')} / {t('custom')}</option>
+                        <option value="custom">{i18n.language === 'he' ? 'אחר / מותאם אישית' : 'Other / Custom'}</option>
                       </Field>
                       {showCustomCategory || (!categories.includes(values.category) && values.category) ? (
                         <Field
                           type="text"
                           className={`form-control mt-2 ${errors.category && touched.category ? 'is-invalid' : ''}`}
-                          placeholder={t('enterCustomCategory')}
+                          placeholder={i18n.language === 'he' ? 'הזן קטגוריה מותאמת אישית' : t('enterCustomCategory')}
                           value={customCategory || values.category}
                           onChange={(e) => handleCustomCategoryChange(e, setFieldValue)}
                         />
