@@ -25,6 +25,10 @@ const AddEditShop = () => {
     openingHours: Yup.string().required(t('required')),
   });
 
+  // Add state for custom category
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+
   useEffect(() => {
     // Fetch malls from API
     // In the fetchMalls function, update the API endpoint
@@ -211,6 +215,24 @@ const AddEditShop = () => {
         rating: 0
       };
 
+  // Add handler for custom category
+  const handleCategoryChange = (e, setFieldValue) => {
+    const value = e.target.value;
+    if (value === 'custom') {
+      setShowCustomCategory(true);
+      setFieldValue('category', customCategory || '');
+    } else {
+      setShowCustomCategory(false);
+      setFieldValue('category', value);
+    }
+  };
+
+  const handleCustomCategoryChange = (e, setFieldValue) => {
+    const value = e.target.value;
+    setCustomCategory(value);
+    setFieldValue('category', value);
+  };
+
   return (
     <div className="add-edit-shop animate-entry">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -232,7 +254,7 @@ const AddEditShop = () => {
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ errors, touched, isSubmitting }) => (
+            {({ errors, touched, isSubmitting, setFieldValue, values }) => (
               <Form>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -270,13 +292,25 @@ const AddEditShop = () => {
                         as="select" 
                         id="category" 
                         name="category" 
-                        className={`form-select ${errors.category && touched.category ? 'is-invalid' : ''}`} 
+                        className={`form-select ${errors.category && touched.category ? 'is-invalid' : ''}`}
+                        onChange={(e) => handleCategoryChange(e, setFieldValue)}
+                        value={categories.includes(values.category) ? values.category : 'custom'}
                       >
                         <option value="">{t('select')} {t('category')}</option>
                         {categories.map((category, index) => (
                           <option key={index} value={category}>{category}</option>
                         ))}
+                        <option value="custom">{t('other')} / {t('custom')}</option>
                       </Field>
+                      {showCustomCategory || (!categories.includes(values.category) && values.category) ? (
+                        <Field
+                          type="text"
+                          className={`form-control mt-2 ${errors.category && touched.category ? 'is-invalid' : ''}`}
+                          placeholder={t('enterCustomCategory')}
+                          value={customCategory || values.category}
+                          onChange={(e) => handleCustomCategoryChange(e, setFieldValue)}
+                        />
+                      ) : null}
                       <ErrorMessage name="category" component="div" className="invalid-feedback" />
                     </div>
 
