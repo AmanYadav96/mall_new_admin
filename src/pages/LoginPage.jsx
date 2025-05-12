@@ -30,15 +30,18 @@ const LoginPage = () => {
         password: values.password
       });
       
-      // Check if login was successful and user is admin
-      if (response.data && response.data.user) {
+      console.log('Login response:', response.data); // Debug response
+      
+      // Check if login was successful
+      if (response.data && response.data.success) {
         const userData = {
-          id: response.data.user._id || response.data.user.id,
-          name: response.data.user.name || 'Admin User',
-          email: response.data.user.email,
-          role: response.data.user.role || 'admin',
-          avatar: response.data.user.avatar || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
-          token: response.data.token || response.data.accessToken
+          id: response.data.user?._id || response.data.user?.id,
+          name: response.data.user?.name || 'Admin User',
+          email: response.data.user?.email,
+          role: response.data.user?.role || 'admin',
+          avatar: response.data.user?.avatar || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+          token: response.data.token || response.data.accessToken,
+          refreshToken: response.data.refreshToken // Store refresh token
         };
         
         // Save to localStorage
@@ -47,7 +50,7 @@ const LoginPage = () => {
         setLoading(false);
         navigate('/dashboard');
       } else {
-        setLoginError(t('invalidCredentials'));
+        setLoginError(response.data?.message || t('invalidCredentials'));
         setLoading(false);
       }
     } catch (error) {
